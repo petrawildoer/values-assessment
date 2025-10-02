@@ -7,6 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { font-family: system-ui, -apple-system, sans-serif; }
+        .dragging { opacity: 0.5; }
+        .drag-over { border-top: 3px solid #4f46e5; }
     </style>
 </head>
 <body class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 sm:p-6">
@@ -29,13 +31,14 @@
 
             <div id="results-section" class="mt-8 hidden">
                 <button id="toggle-results" class="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors">
-                    Show My Top 10 Values
+                    Show My Top 7 Values
                 </button>
                 <div id="results-content" class="mt-6 bg-indigo-50 rounded-lg p-4 sm:p-6 hidden">
-                    <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4">Your Top 10 Values</h2>
+                    <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-2">Your Top 7 Values</h2>
+                    <p class="text-sm text-gray-600 mb-4">Drag and drop to reorder your values by priority</p>
                     <div id="top-values" class="space-y-2 sm:space-y-3"></div>
                     <p class="mt-4 text-xs sm:text-sm text-gray-600">
-                        These are the values you rated highest. Consider how well your current life choices align with these priorities.
+                        These are your most important values. Consider how well your current life choices align with these priorities.
                     </p>
                 </div>
             </div>
@@ -96,6 +99,7 @@
         ];
 
         const ratings = {};
+        let topValues = [];
 
         function updateProgress() {
             const ratedCount = Object.keys(ratings).length;
@@ -148,18 +152,99 @@
         }
 
         function showResults() {
-            const topValues = Object.entries(ratings)
+            topValues = Object.entries(ratings)
                 .sort(([, a], [, b]) => b - a)
-                .slice(0, 10);
+                .slice(0, 7)
+                .map(([name, rating]) => ({ name, rating }));
 
+            renderTopValues();
+        }
+
+        function renderTopValues() {
             const container = document.getElementById('top-values');
-            container.innerHTML = topValues.map(([name, rating], index) => `
-                <div class="flex items-center gap-2 sm:gap-3 bg-white rounded-lg p-3 sm:p-4 shadow-sm">
+            container.innerHTML = topValues.map((value, index) => `
+                <div 
+                    class="flex items-center gap-2 sm:gap-3 bg-white rounded-lg p-3 sm:p-4 shadow-sm cursor-move hover:shadow-md transition-shadow"
+                    draggable="true"
+                    data-index="${index}"
+                >
+                    <svg class="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path>
+                    </svg>
                     <span class="text-lg sm:text-2xl font-bold text-indigo-600 w-6 sm:w-8">#${index + 1}</span>
-                    <span class="flex-grow text-base sm:text-lg font-semibold text-gray-800">${name}</span>
-                    <span class="text-lg sm:text-xl font-bold text-indigo-600">${rating}/10</span>
+                    <span class="flex-grow text-base sm:text-lg font-semibold text-gray-800">${value.name}</span>
+                    <span class="text-lg sm:text-xl font-bold text-indigo-600">${value.rating}/10</span>
                 </div>
             `).join('');
+
+            setupDragAndDrop();
+        }
+
+        function setupDragAndDrop() {
+            const items = document.querySelectorAll('#top-values > div');
+            
+            items.forEach(item => {
+                item.addEventListener('dragstart', handleDragStart);
+                item.addEventListener('dragend', handleDragEnd);
+                item.addEventListener('dragover', handleDragOver);
+                item.addEventListener('drop', handleDrop);
+                item.addEventListener('dragenter', handleDragEnter);
+                item.addEventListener('dragleave', handleDragLeave);
+            });
+        }
+
+        let draggedElement = null;
+        let draggedIndex = null;
+
+        function handleDragStart(e) {
+            draggedElement = this;
+            draggedIndex = parseInt(this.getAttribute('data-index'));
+            this.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        }
+
+        function handleDragEnd(e) {
+            this.classList.remove('dragging');
+            document.querySelectorAll('#top-values > div').forEach(item => {
+                item.classList.remove('drag-over');
+            });
+        }
+
+        function handleDragOver(e) {
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        }
+
+        function handleDragEnter(e) {
+            if (this !== draggedElement) {
+                this.classList.add('drag-over');
+            }
+        }
+
+        function handleDragLeave(e) {
+            this.classList.remove('drag-over');
+        }
+
+        function handleDrop(e) {
+            if (e.stopPropagation) {
+                e.stopPropagation();
+            }
+            
+            if (draggedElement !== this) {
+                const dropIndex = parseInt(this.getAttribute('data-index'));
+                
+                // Reorder the array
+                const item = topValues[draggedIndex];
+                topValues.splice(draggedIndex, 1);
+                topValues.splice(dropIndex, 0, item);
+                
+                renderTopValues();
+            }
+            
+            return false;
         }
 
         document.getElementById('toggle-results').addEventListener('click', function() {
@@ -172,7 +257,7 @@
                 this.textContent = 'Hide Results';
             } else {
                 content.classList.add('hidden');
-                this.textContent = 'Show My Top 10 Values';
+                this.textContent = 'Show My Top 7 Values';
             }
         });
 
