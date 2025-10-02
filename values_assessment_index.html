@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Values Assessment</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 sm:p-6">
+    <div class="max-w-4xl mx-auto">
+        <div class="bg-white rounded-lg shadow-lg p-4 sm:p-8">
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">Personal Values Assessment</h1>
+            <p class="text-sm sm:text-base text-gray-600 mb-4">Rate each value from 1 (not important) to 10 (extremely important) based on how much it matters to you in your life.</p>
+            
+            <div class="mb-6">
+                <div class="flex justify-between text-sm text-gray-600 mb-2">
+                    <span>Progress: <span id="progress-text">0 of 49</span></span>
+                    <span id="progress-percent">0%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div id="progress-bar" class="bg-indigo-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div id="values-container" class="space-y-4 sm:space-y-6"></div>
+
+            <div id="results-section" class="mt-8 hidden">
+                <button id="toggle-results" class="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors">
+                    Show My Top 10 Values
+                </button>
+                <div id="results-content" class="mt-6 bg-indigo-50 rounded-lg p-4 sm:p-6 hidden">
+                    <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4">Your Top 10 Values</h2>
+                    <div id="top-values" class="space-y-2 sm:space-y-3"></div>
+                    <p class="mt-4 text-xs sm:text-sm text-gray-600">
+                        These are the values you rated highest. Consider how well your current life choices align with these priorities.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const VALUES = [
+            { name: 'Respect', description: 'Holding others in high regard and valuing their worth' },
+            { name: 'Love', description: 'Deep affection and care for someone or something' },
+            { name: 'Friendship', description: 'A close and trusting bond between individuals' },
+            { name: 'Fairness', description: 'Treating everyone justly and equitably' },
+            { name: 'Community', description: 'A sense of belonging and connection with a group' },
+            { name: 'Empathy', description: 'Understanding and sharing another\'s emotions' },
+            { name: 'Kindness', description: 'Being considerate, compassionate, and helpful to others' },
+            { name: 'Intimacy', description: 'Deep personal connection and closeness with others' },
+            { name: 'Family', description: 'Bonds of love, support, and commitment among relatives' },
+            { name: 'Teamwork', description: 'Collaborating effectively to achieve shared goals' },
+            { name: 'Collaboration', description: 'Working together with others to create something' },
+            { name: 'Inclusion', description: 'Ensuring everyone feels valued and included' },
+            { name: 'Influence', description: 'The power to affect others\' actions, thoughts, or behaviors' },
+            { name: 'Status', description: 'A person\'s social or professional standing within a group' },
+            { name: 'Wealth', description: 'Accumulation of valuable resources or assets' },
+            { name: 'Credibility', description: 'Earning trust and confidence through reliability' },
+            { name: 'Risk-taking', description: 'Willingness to embrace uncertainty and pursue new opportunities' },
+            { name: 'Autonomy', description: 'Independence and self-direction in one\'s decisions and actions' },
+            { name: 'Leadership', description: 'Guiding and inspiring others toward common objectives' },
+            { name: 'Advocacy', description: 'Publicly supporting a cause or set of principles' },
+            { name: 'Visibility', description: 'Being seen and recognized for one\'s contributions' },
+            { name: 'Authority', description: 'The power to direct or influence others\' behavior' },
+            { name: 'Accomplishment', description: 'Achieving significant goals or milestones' },
+            { name: 'Reputation', description: 'The perception of a person\'s character and actions by others' },
+            { name: 'Learning', description: 'Continuously acquiring new knowledge or skills' },
+            { name: 'Playfulness', description: 'Approaching life with a light, joyful attitude, embracing fun and spontaneity' },
+            { name: 'Achievement', description: 'Attaining personal or professional success' },
+            { name: 'Curiosity', description: 'A strong desire to explore and understand the world' },
+            { name: 'Balance', description: 'Maintaining stability and harmony across different areas of life' },
+            { name: 'Physical fitness', description: 'Maintaining a healthy and active body' },
+            { name: 'Mental fitness', description: 'Developing and sustaining cognitive and emotional health' },
+            { name: 'Skill mastery', description: 'Becoming highly proficient in a particular ability' },
+            { name: 'Resilience', description: 'The ability to recover from setbacks and challenges' },
+            { name: 'Adaptability', description: 'Adjusting to changing circumstances with ease' },
+            { name: 'Creativity', description: 'Generating new ideas and innovative solutions' },
+            { name: 'Courage', description: 'Acting in the face of fear or uncertainty' },
+            { name: 'Honesty', description: 'Being truthful and straightforward in words and actions' },
+            { name: 'Peace', description: 'A state of calm, free from conflict and turmoil' },
+            { name: 'Gratitude', description: 'Recognizing and appreciating the good in life' },
+            { name: 'Wisdom', description: 'Applying knowledge and experience to make sound decisions' },
+            { name: 'Spirituality', description: 'Connecting with a higher purpose or greater meaning in life' },
+            { name: 'Social contribution', description: 'Giving back to society and making a positive impact' },
+            { name: 'Nature stewardship', description: 'Caring for and preserving the natural environment' },
+            { name: 'Vocation', description: 'Pursuing work that aligns with one\'s passion and purpose' },
+            { name: 'Philanthropy', description: 'Donating time, money, or resources to charitable causes' },
+            { name: 'Transcendence', description: 'Rising above ordinary limitations or challenges' },
+            { name: 'Legacy', description: 'The lasting impact or memory you leave behind after your life' },
+            { name: 'Altruism', description: 'Putting the needs of others before your own' },
+            { name: 'Awe', description: 'A profound sense of wonder and admiration in response to something beautiful' }
+        ];
+
+        const ratings = {};
+
+        function updateProgress() {
+            const ratedCount = Object.keys(ratings).length;
+            const progress = (ratedCount / VALUES.length) * 100;
+            document.getElementById('progress-text').textContent = `${ratedCount} of ${VALUES.length}`;
+            document.getElementById('progress-percent').textContent = `${Math.round(progress)}%`;
+            document.getElementById('progress-bar').style.width = `${progress}%`;
+
+            if (ratedCount === VALUES.length) {
+                document.getElementById('results-section').classList.remove('hidden');
+            }
+        }
+
+        function handleRating(valueName, rating) {
+            ratings[valueName] = rating;
+            updateProgress();
+            renderValues();
+        }
+
+        function renderValues() {
+            const container = document.getElementById('values-container');
+            container.innerHTML = VALUES.map(value => {
+                const currentRating = ratings[value.name];
+                return `
+                    <div class="border-b border-gray-200 pb-4 sm:pb-6 last:border-b-0">
+                        <div class="flex items-start gap-2 sm:gap-3 mb-3">
+                            <div class="flex-grow min-w-0">
+                                <h3 class="text-base sm:text-lg font-semibold text-gray-800">${value.name}</h3>
+                                <p class="text-xs sm:text-sm text-gray-500">${value.description}</p>
+                            </div>
+                            ${currentRating ? `<span class="text-xl sm:text-2xl font-bold text-indigo-600 min-w-[2.5rem] sm:min-w-[3rem] text-right">${currentRating}</span>` : ''}
+                        </div>
+                        <div class="flex gap-1 sm:gap-2 flex-wrap">
+                            ${[1,2,3,4,5,6,7,8,9,10].map(rating => `
+                                <button 
+                                    onclick="handleRating('${value.name}', ${rating})"
+                                    class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg font-medium transition-all text-sm sm:text-base ${
+                                        currentRating === rating 
+                                            ? 'bg-indigo-600 text-white shadow-md scale-110' 
+                                            : 'bg-gray-100 text-gray-600 hover:bg-indigo-100 hover:text-indigo-700'
+                                    }"
+                                >
+                                    ${rating}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function showResults() {
+            const topValues = Object.entries(ratings)
+                .sort(([, a], [, b]) => b - a)
+                .slice(0, 10);
+
+            const container = document.getElementById('top-values');
+            container.innerHTML = topValues.map(([name, rating], index) => `
+                <div class="flex items-center gap-2 sm:gap-3 bg-white rounded-lg p-3 sm:p-4 shadow-sm">
+                    <span class="text-lg sm:text-2xl font-bold text-indigo-600 w-6 sm:w-8">#${index + 1}</span>
+                    <span class="flex-grow text-base sm:text-lg font-semibold text-gray-800">${name}</span>
+                    <span class="text-lg sm:text-xl font-bold text-indigo-600">${rating}/10</span>
+                </div>
+            `).join('');
+        }
+
+        document.getElementById('toggle-results').addEventListener('click', function() {
+            const content = document.getElementById('results-content');
+            const isHidden = content.classList.contains('hidden');
+            
+            if (isHidden) {
+                showResults();
+                content.classList.remove('hidden');
+                this.textContent = 'Hide Results';
+            } else {
+                content.classList.add('hidden');
+                this.textContent = 'Show My Top 10 Values';
+            }
+        });
+
+        renderValues();
+    </script>
+</body>
+</html>
