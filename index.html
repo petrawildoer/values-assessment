@@ -9,6 +9,15 @@
         body { font-family: system-ui, -apple-system, sans-serif; }
         .dragging { opacity: 0.5; }
         .drag-over { border-top: 3px solid #4f46e5; }
+        .draggable-item {
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+        .draggable-item * {
+            pointer-events: none;
+        }
     </style>
 </head>
 <body class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 sm:p-6">
@@ -164,7 +173,7 @@
             const container = document.getElementById('top-values');
             container.innerHTML = topValues.map((value, index) => `
                 <div 
-                    class="flex items-center gap-2 sm:gap-3 bg-white rounded-lg p-3 sm:p-4 shadow-sm cursor-move hover:shadow-md transition-shadow"
+                    class="draggable-item flex items-center gap-2 sm:gap-3 bg-white rounded-lg p-3 sm:p-4 shadow-sm cursor-move hover:shadow-md transition-shadow"
                     draggable="true"
                     data-index="${index}"
                 >
