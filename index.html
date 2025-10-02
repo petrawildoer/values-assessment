@@ -8,15 +8,14 @@
     <style>
         body { font-family: system-ui, -apple-system, sans-serif; }
         .dragging { opacity: 0.5; }
-        .drag-over { border-top: 3px solid #4f46e5; }
+        .drag-over { 
+            border-top: 3px solid #4f46e5;
+            margin-top: 4px;
+        }
         .draggable-item {
             user-select: none;
             -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-        }
-        .draggable-item * {
-            pointer-events: none;
+            touch-action: none;
         }
     </style>
 </head>
@@ -44,8 +43,8 @@
                 </button>
                 <div id="results-content" class="mt-6 bg-indigo-50 rounded-lg p-4 sm:p-6 hidden">
                     <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-2">Your Top 7 Values</h2>
-                    <p class="text-sm text-gray-600 mb-4">Drag and drop to reorder your values by priority</p>
-                    <div id="top-values" class="space-y-2 sm:space-y-3"></div>
+                    <p class="text-sm text-gray-600 mb-4">Click and hold to drag items and reorder by priority</p>
+                    <div id="top-values" class="space-y-3"></div>
                     <p class="mt-4 text-xs sm:text-sm text-gray-600">
                         These are your most important values. Consider how well your current life choices align with these priorities.
                     </p>
@@ -173,12 +172,11 @@
             const container = document.getElementById('top-values');
             container.innerHTML = topValues.map((value, index) => `
                 <div 
-                    class="draggable-item flex items-center gap-2 sm:gap-3 bg-white rounded-lg p-3 sm:p-4 shadow-sm cursor-move hover:shadow-md transition-shadow"
-                    draggable="true"
+                    class="draggable-item flex items-center gap-2 sm:gap-3 bg-white rounded-lg p-3 sm:p-4 shadow-sm cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow"
                     data-index="${index}"
                 >
-                    <svg class="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"></path>
+                    <svg class="w-6 h-6 text-gray-400 flex-shrink-0 drag-handle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
                     </svg>
                     <span class="text-lg sm:text-2xl font-bold text-indigo-600 w-6 sm:w-8">#${index + 1}</span>
                     <span class="flex-grow text-base sm:text-lg font-semibold text-gray-800">${value.name}</span>
@@ -190,70 +188,107 @@
         }
 
         function setupDragAndDrop() {
-            const items = document.querySelectorAll('#top-values > div');
+            const items = document.querySelectorAll('.draggable-item');
+            let draggedItem = null;
+            let placeholder = null;
+
+            items.forEach(item => {
+                // Mouse events
+                item.addEventListener('mousedown', function(e) {
+                    draggedItem = this;
+                    this.style.opacity = '0.5';
+                    
+                    const rect = this.getBoundingClientRect();
+                    const offsetY = e.clientY - rect.top;
+
+                    function onMouseMove(e) {
+                        e.preventDefault();
+                        
+                        const afterElement = getDragAfterElement(document.getElementById('top-values'), e.clientY);
+                        const container = document.getElementById('top-values');
+                        
+                        if (afterElement == null) {
+                            container.appendChild(draggedItem);
+                        } else {
+                            container.insertBefore(draggedItem, afterElement);
+                        }
+                    }
+
+                    function onMouseUp() {
+                        draggedItem.style.opacity = '1';
+                        document.removeEventListener('mousemove', onMouseMove);
+                        document.removeEventListener('mouseup', onMouseUp);
+                        
+                        updateOrderFromDOM();
+                        renderTopValues();
+                    }
+
+                    document.addEventListener('mousemove', onMouseMove);
+                    document.addEventListener('mouseup', onMouseUp);
+                });
+
+                // Touch events for mobile
+                item.addEventListener('touchstart', function(e) {
+                    draggedItem = this;
+                    this.style.opacity = '0.5';
+                    
+                    const touch = e.touches[0];
+                    const rect = this.getBoundingClientRect();
+
+                    function onTouchMove(e) {
+                        e.preventDefault();
+                        const touch = e.touches[0];
+                        
+                        const afterElement = getDragAfterElement(document.getElementById('top-values'), touch.clientY);
+                        const container = document.getElementById('top-values');
+                        
+                        if (afterElement == null) {
+                            container.appendChild(draggedItem);
+                        } else {
+                            container.insertBefore(draggedItem, afterElement);
+                        }
+                    }
+
+                    function onTouchEnd() {
+                        draggedItem.style.opacity = '1';
+                        document.removeEventListener('touchmove', onTouchMove);
+                        document.removeEventListener('touchend', onTouchEnd);
+                        
+                        updateOrderFromDOM();
+                        renderTopValues();
+                    }
+
+                    document.addEventListener('touchmove', onTouchMove, { passive: false });
+                    document.addEventListener('touchend', onTouchEnd);
+                });
+            });
+        }
+
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.draggable-item:not(.dragging)')];
+
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        function updateOrderFromDOM() {
+            const items = document.querySelectorAll('.draggable-item');
+            const newOrder = [];
             
             items.forEach(item => {
-                item.addEventListener('dragstart', handleDragStart);
-                item.addEventListener('dragend', handleDragEnd);
-                item.addEventListener('dragover', handleDragOver);
-                item.addEventListener('drop', handleDrop);
-                item.addEventListener('dragenter', handleDragEnter);
-                item.addEventListener('dragleave', handleDragLeave);
+                const index = parseInt(item.getAttribute('data-index'));
+                newOrder.push(topValues[index]);
             });
-        }
-
-        let draggedElement = null;
-        let draggedIndex = null;
-
-        function handleDragStart(e) {
-            draggedElement = this;
-            draggedIndex = parseInt(this.getAttribute('data-index'));
-            this.classList.add('dragging');
-            e.dataTransfer.effectAllowed = 'move';
-        }
-
-        function handleDragEnd(e) {
-            this.classList.remove('dragging');
-            document.querySelectorAll('#top-values > div').forEach(item => {
-                item.classList.remove('drag-over');
-            });
-        }
-
-        function handleDragOver(e) {
-            if (e.preventDefault) {
-                e.preventDefault();
-            }
-            e.dataTransfer.dropEffect = 'move';
-            return false;
-        }
-
-        function handleDragEnter(e) {
-            if (this !== draggedElement) {
-                this.classList.add('drag-over');
-            }
-        }
-
-        function handleDragLeave(e) {
-            this.classList.remove('drag-over');
-        }
-
-        function handleDrop(e) {
-            if (e.stopPropagation) {
-                e.stopPropagation();
-            }
             
-            if (draggedElement !== this) {
-                const dropIndex = parseInt(this.getAttribute('data-index'));
-                
-                // Reorder the array
-                const item = topValues[draggedIndex];
-                topValues.splice(draggedIndex, 1);
-                topValues.splice(dropIndex, 0, item);
-                
-                renderTopValues();
-            }
-            
-            return false;
+            topValues = newOrder;
         }
 
         document.getElementById('toggle-results').addEventListener('click', function() {
