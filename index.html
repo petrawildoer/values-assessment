@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Personal Values Assessment</title>
+    <title>Values Assessment</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { font-family: system-ui, -apple-system, sans-serif; }
@@ -22,7 +22,7 @@
 <body class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 sm:p-6">
     <div class="max-w-4xl mx-auto">
         <div class="bg-white rounded-lg shadow-lg p-4 sm:p-8">
-            <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">Personal Values Assessment</h1>
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">Values Assessment</h1>
             <p class="text-sm sm:text-base text-gray-600 mb-4">Rate each value from 1 (not important) to 10 (extremely important) based on how much it matters to you in your life.</p>
             
             <div class="mb-6">
@@ -55,56 +55,27 @@
 
     <script>
         const VALUES = [
-            { name: 'Respect', description: 'Holding others in high regard and valuing their worth' },
-            { name: 'Love', description: 'Deep affection and care for someone or something' },
-            { name: 'Friendship', description: 'A close and trusting bond between individuals' },
-            { name: 'Fairness', description: 'Treating everyone justly and equitably' },
-            { name: 'Community', description: 'A sense of belonging and connection with a group' },
-            { name: 'Empathy', description: 'Understanding and sharing another\'s emotions' },
-            { name: 'Kindness', description: 'Being considerate, compassionate, and helpful to others' },
-            { name: 'Intimacy', description: 'Deep personal connection and closeness with others' },
-            { name: 'Family', description: 'Bonds of love, support, and commitment among relatives' },
-            { name: 'Teamwork', description: 'Collaborating effectively to achieve shared goals' },
-            { name: 'Collaboration', description: 'Working together with others to create something' },
-            { name: 'Inclusion', description: 'Ensuring everyone feels valued and included' },
-            { name: 'Influence', description: 'The power to affect others\' actions, thoughts, or behaviors' },
-            { name: 'Status', description: 'A person\'s social or professional standing within a group' },
-            { name: 'Wealth', description: 'Accumulation of valuable resources or assets' },
-            { name: 'Credibility', description: 'Earning trust and confidence through reliability' },
-            { name: 'Risk-taking', description: 'Willingness to embrace uncertainty and pursue new opportunities' },
+            { name: 'Respect', description: 'Holding others in high regard' },
+            { name: 'Connection', description: 'Feeling connected with people around you' },
+            { name: 'Empathy & Kindness', description: 'Understanding others and being compassionate' },
+            { name: 'Collaboration', description: 'Working together effectively' },
+            { name: 'Influence & Leadership', description: 'Guiding and inspiring others towards goals' },
+            { name: 'Trustworthiness', description: 'Being reliable and earning others' trust and confidence' },
+            { name: 'Status', description: 'Social or professional standing within a group' },
             { name: 'Autonomy', description: 'Independence and self-direction in one\'s decisions and actions' },
-            { name: 'Leadership', description: 'Guiding and inspiring others toward common objectives' },
-            { name: 'Advocacy', description: 'Publicly supporting a cause or set of principles' },
-            { name: 'Visibility', description: 'Being seen and recognized for one\'s contributions' },
-            { name: 'Authority', description: 'The power to direct or influence others\' behavior' },
-            { name: 'Accomplishment', description: 'Achieving significant goals or milestones' },
-            { name: 'Reputation', description: 'The perception of a person\'s character and actions by others' },
-            { name: 'Learning', description: 'Continuously acquiring new knowledge or skills' },
-            { name: 'Playfulness', description: 'Approaching life with a light, joyful attitude, embracing fun and spontaneity' },
-            { name: 'Achievement', description: 'Attaining personal or professional success' },
-            { name: 'Curiosity', description: 'A strong desire to explore and understand the world' },
+            { name: 'Achievement', description: 'Attaining meaningful success' },
+            { name: 'Learning & Curiosity', description: 'Continuously growing and exploring' },
+            { name: 'Playfulness', description: 'Approaching life with joy, fun and spontaneity' },
             { name: 'Balance', description: 'Maintaining stability and harmony across different areas of life' },
-            { name: 'Physical fitness', description: 'Maintaining a healthy and active body' },
-            { name: 'Mental fitness', description: 'Developing and sustaining cognitive and emotional health' },
-            { name: 'Skill mastery', description: 'Becoming highly proficient in a particular ability' },
-            { name: 'Resilience', description: 'The ability to recover from setbacks and challenges' },
-            { name: 'Adaptability', description: 'Adjusting to changing circumstances with ease' },
+            { name: 'Health', description: 'Mental and physical fitness and wellbeing' },
+            { name: 'Resilience & Adaptability', description: 'Recovering from setbacks and adjusting to change' },
             { name: 'Creativity', description: 'Generating new ideas and innovative solutions' },
-            { name: 'Courage', description: 'Acting in the face of fear or uncertainty' },
-            { name: 'Honesty', description: 'Being truthful and straightforward in words and actions' },
-            { name: 'Peace', description: 'A state of calm, free from conflict and turmoil' },
-            { name: 'Gratitude', description: 'Recognizing and appreciating the good in life' },
+            { name: 'Courage', description: 'Acting despite fear or uncertainty' },
+            { name: 'Honesty & Integrity', description: 'Being truthful and straightforward in words and actions' },
             { name: 'Wisdom', description: 'Applying knowledge and experience to make sound decisions' },
-            { name: 'Spirituality', description: 'Connecting with a higher purpose or greater meaning in life' },
             { name: 'Social contribution', description: 'Giving back to society and making a positive impact' },
-            { name: 'Nature stewardship', description: 'Caring for and preserving the natural environment' },
-            { name: 'Vocation', description: 'Pursuing work that aligns with one\'s passion and purpose' },
-            { name: 'Philanthropy', description: 'Donating time, money, or resources to charitable causes' },
-            { name: 'Transcendence', description: 'Rising above ordinary limitations or challenges' },
-            { name: 'Legacy', description: 'The lasting impact or memory you leave behind after your life' },
             { name: 'Altruism', description: 'Putting the needs of others before your own' },
-            { name: 'Awe', description: 'A profound sense of wonder and admiration in response to something beautiful' }
-        ];
+            
 
         const ratings = {};
         let topValues = [];
