@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Waarden Assessment</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; }
+        .dragging { opacity: 0.5; }
+        .drag-over { 
+            border-top: 3px solid #4f46e5;
+            margin-top: 4px;
+        }
+        .draggable-item {
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 sm:p-6">
+    <div class="max-w-4xl mx-auto">
+        <div class="bg-white rounded-lg shadow-lg p-4 sm:p-8">
+            <!-- Language switcher -->
+            <div class="flex justify-end mb-4">
+                <div class="flex items-center gap-1 text-sm font-medium">
+                    <a href="index.html" class="px-2 py-1 rounded text-gray-500 hover:bg-indigo-100 hover:text-indigo-700 transition-colors">EN</a>
+                    <span class="text-gray-400">/</span>
+                    <span class="px-2 py-1 rounded bg-indigo-600 text-white">NL</span>
+                </div>
+            </div>
+
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">Waarden Assessment</h1>
+            <p class="text-sm sm:text-base text-gray-600 mb-4">Beoordeel elke waarde van 1 (niet belangrijk) tot 10 (uiterst belangrijk) op basis van hoe belangrijk het voor je is in je leven.</p>
+            
+            <div class="mb-6">
+                <div class="flex justify-between text-sm text-gray-600 mb-2">
+                    <span>Voortgang: <span id="progress-text">0 van 20</span></span>
+                    <span id="progress-percent">0%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div id="progress-bar" class="bg-indigo-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+            </div>
+            <div id="values-container" class="space-y-4 sm:space-y-6"></div>
+            <div id="results-section" class="mt-8 hidden">
+                <button id="toggle-results" class="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors">
+                    Toon Mijn Top 7 Waarden
+                </button>
+                <div id="results-content" class="mt-6 bg-indigo-50 rounded-lg p-4 sm:p-6 hidden">
+                    <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-2">Jouw Top 7 Waarden</h2>
+                    <p class="text-sm text-gray-600 mb-4">Klik en houd vast om items te slepen en op prioriteit te rangschikken</p>
+                    <div id="top-values" class="space-y-3"></div>
+                    <p class="mt-4 text-xs sm:text-sm text-gray-600">
+                        Dit zijn jouw belangrijkste waarden. Overweeg hoe goed je huidige levenskeuzes aansluiten bij deze prioriteiten.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const VALUES = [
+            { name: 'Respect', description: 'Anderen in hoog aanzien houden' },
+            { name: 'Verbinding', description: 'Je verbonden voelen met de mensen om je heen' },
+            { name: 'Empathie & Vriendelijkheid', description: 'Anderen begrijpen en medelevend zijn' },
+            { name: 'Samenwerking', description: 'Effectief samenwerken' },
+            { name: 'Invloed & Leiderschap', description: 'Anderen begeleiden en inspireren richting doelen' },
+            { name: 'Betrouwbaarheid', description: 'Betrouwbaar zijn en vertrouwen verdienen' },
+            { name: 'Status', description: 'Sociale of professionele positie binnen een groep' },
+            { name: 'Autonomie', description: 'Onafhankelijkheid en zelfsturing in beslissingen en acties' },
+            { name: 'Prestatie', description: 'Betekenisvol succes behalen' },
+            { name: 'Leren & Nieuwsgierigheid', description: 'Voortdurend groeien en verkennen' },
+            { name: 'Speelsheid', description: 'Het leven benaderen met vreugde, plezier en spontaniteit' },
+            { name: 'Balans', description: 'Stabiliteit en harmonie bewaren in verschillende levensgebieden' },
+            { name: 'Gezondheid', description: 'Mentale en fysieke fitheid en welzijn' },
+            { name: 'Veerkracht & Aanpassingsvermogen', description: 'Herstellen van tegenslagen en aanpassen aan verandering' },
+            { name: 'Creativiteit', description: 'Nieuwe ideeën en innovatieve oplossingen bedenken' },
+            { name: 'Moed', description: 'Handelen ondanks angst of onzekerheid' },
+            { name: 'Eerlijkheid & Integriteit', description: 'Oprecht en rechtlijnig zijn in woorden en daden' },
+            { name: 'Wijsheid', description: 'Kennis en ervaring toepassen om goede beslissingen te nemen' },
+            { name: 'Maatschappelijke bijdrage', description: 'Iets teruggeven aan de samenleving en een positieve impact maken' },
+            { name: 'Altruïsme', description: 'De behoeften van anderen voor je eigen behoeften stellen' }
+        ];
+
+        const ratings = {};
+        let topValues = [];
+
+        function updateProgress() {
+            const ratedCount = Object.keys(ratings).length;
+            const progress = (ratedCount / VALUES.length) * 100;
+            document.getElementById('progress-text').textContent = `${ratedCount} van ${VALUES.length}`;
+            document.getElementById('progress-percent').textContent = `${Math.round(progress)}%`;
+            document.getElementById('progress-bar').style.width = `${progress}%`;
+            if (ratedCount === VALUES.length) {
+                document.getElementById('results-section').classList.remove('hidden');
+            }
+        }
+
+        function handleRating(valueName, rating) {
+            ratings[valueName] = rating;
+            updateProgress();
+            renderValues();
+        }
+
+        function renderValues() {
+            const container = document.getElementById('values-container');
+            container.innerHTML = VALUES.map(value => {
+                const currentRating = ratings[value.name];
+                return `
+                    <div class="border-b border-gray-200 pb-4 sm:pb-6 last:border-b-0">
+                        <div class="flex items-start gap-2 sm:gap-3 mb-3">
+                            <div class="flex-grow min-w-0">
+                                <h3 class="text-base sm:text-lg font-semibold text-gray-800">${value.name}</h3>
+                                <p class="text-xs sm:text-sm text-gray-500">${value.description}</p>
+                            </div>
+                            ${currentRating ? `<span class="text-xl sm:text-2xl font-bold text-indigo-600 min-w-[2.5rem] sm:min-w-[3rem] text-right">${currentRating}</span>` : ''}
+                        </div>
+                        <div class="flex gap-1 sm:gap-2 flex-wrap">
+                            ${[1,2,3,4,5,6,7,8,9,10].map(rating => `
+                                <button 
+                                    onclick="handleRating('${value.name}', ${rating})"
+                                    class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg font-medium transition-all text-sm sm:text-base ${
+                                        currentRating === rating 
+                                            ? 'bg-indigo-600 text-white shadow-md scale-110' 
+                                            : 'bg-gray-100 text-gray-600 hover:bg-indigo-100 hover:text-indigo-700'
+                                    }"
+                                >
+                                    ${rating}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function showResults() {
+            topValues = Object.entries(ratings)
+                .sort(([, a], [, b]) => b - a)
+                .slice(0, 7)
+                .map(([name, rating]) => ({ name, rating }));
+            renderTopValues();
+        }
+
+        function renderTopValues() {
+            const container = document.getElementById('top-values');
+            container.innerHTML = topValues.map((value, index) => `
+                <div 
+                    class="draggable-item flex items-center gap-2 sm:gap-3 bg-white rounded-lg p-3 sm:p-4 shadow-sm cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow"
+                    data-index="${index}"
+                >
+                    <svg class="w-6 h-6 text-gray-400 flex-shrink-0 drag-handle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                    <span class="text-lg sm:text-2xl font-bold text-indigo-600 w-6 sm:w-8">#${index + 1}</span>
+                    <span class="flex-grow text-base sm:text-lg font-semibold text-gray-800">${value.name}</span>
+                    <span class="text-lg sm:text-xl font-bold text-indigo-600">${value.rating}/10</span>
+                </div>
+            `).join('');
+            setupDragAndDrop();
+        }
+
+        function setupDragAndDrop() {
+            const items = document.querySelectorAll('.draggable-item');
+            let draggedItem = null;
+
+            items.forEach(item => {
+                // Mouse events
+                item.addEventListener('mousedown', function(e) {
+                    draggedItem = this;
+                    this.style.opacity = '0.5';
+                    
+                    function onMouseMove(e) {
+                        e.preventDefault();
+                        const afterElement = getDragAfterElement(document.getElementById('top-values'), e.clientY);
+                        const container = document.getElementById('top-values');
+                        if (afterElement == null) {
+                            container.appendChild(draggedItem);
+                        } else {
+                            container.insertBefore(draggedItem, afterElement);
+                        }
+                    }
+                    function onMouseUp() {
+                        draggedItem.style.opacity = '1';
+                        document.removeEventListener('mousemove', onMouseMove);
+                        document.removeEventListener('mouseup', onMouseUp);
+                        updateOrderFromDOM();
+                        renderTopValues();
+                    }
+                    document.addEventListener('mousemove', onMouseMove);
+                    document.addEventListener('mouseup', onMouseUp);
+                });
+
+                // Touch events for mobile
+                item.addEventListener('touchstart', function(e) {
+                    draggedItem = this;
+                    this.style.opacity = '0.5';
+                    
+                    function onTouchMove(e) {
+                        e.preventDefault();
+                        const touch = e.touches[0];
+                        const afterElement = getDragAfterElement(document.getElementById('top-values'), touch.clientY);
+                        const container = document.getElementById('top-values');
+                        if (afterElement == null) {
+                            container.appendChild(draggedItem);
+                        } else {
+                            container.insertBefore(draggedItem, afterElement);
+                        }
+                    }
+                    function onTouchEnd() {
+                        draggedItem.style.opacity = '1';
+                        document.removeEventListener('touchmove', onTouchMove);
+                        document.removeEventListener('touchend', onTouchEnd);
+                        updateOrderFromDOM();
+                        renderTopValues();
+                    }
+                    document.addEventListener('touchmove', onTouchMove, { passive: false });
+                    document.addEventListener('touchend', onTouchEnd);
+                });
+            });
+        }
+
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.draggable-item:not(.dragging)')];
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        function updateOrderFromDOM() {
+            const items = document.querySelectorAll('.draggable-item');
+            const newOrder = [];
+            items.forEach(item => {
+                const index = parseInt(item.getAttribute('data-index'));
+                newOrder.push(topValues[index]);
+            });
+            topValues = newOrder;
+        }
+
+        document.getElementById('toggle-results').addEventListener('click', function() {
+            const content = document.getElementById('results-content');
+            const isHidden = content.classList.contains('hidden');
+            if (isHidden) {
+                showResults();
+                content.classList.remove('hidden');
+                this.textContent = 'Verberg Resultaten';
+            } else {
+                content.classList.add('hidden');
+                this.textContent = 'Toon Mijn Top 7 Waarden';
+            }
+        });
+
+        renderValues();
+    </script>
+</body>
+</html>
