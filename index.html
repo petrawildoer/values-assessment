@@ -22,6 +22,16 @@
 <body class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 sm:p-6">
     <div class="max-w-4xl mx-auto">
         <div class="bg-white rounded-lg shadow-lg p-4 sm:p-8">
+
+            <!-- Language switcher -->
+            <div class="flex justify-end mb-4">
+                <div class="flex items-center gap-1 text-sm font-medium">
+                    <span class="px-2 py-1 rounded bg-indigo-600 text-white">EN</span>
+                    <span class="text-gray-400">/</span>
+                    <a href="waarden-assessment.html" class="px-2 py-1 rounded text-gray-500 hover:bg-indigo-100 hover:text-indigo-700 transition-colors">NL</a>
+                </div>
+            </div>
+
             <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">Values Assessment</h1>
             <p class="text-sm sm:text-base text-gray-600 mb-4">Rate each value from 1 (not important) to 10 (extremely important) based on how much it matters to you in your life.</p>
             
@@ -34,9 +44,7 @@
                     <div id="progress-bar" class="bg-indigo-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
                 </div>
             </div>
-
             <div id="values-container" class="space-y-4 sm:space-y-6"></div>
-
             <div id="results-section" class="mt-8 hidden">
                 <button id="toggle-results" class="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors">
                     Show My Top 7 Values
@@ -52,7 +60,6 @@
             </div>
         </div>
     </div>
-
     <script>
         const VALUES = [
             { name: 'Respect', description: 'Holding others in high regard' },
@@ -76,28 +83,23 @@
             { name: 'Social contribution', description: 'Giving back to society and making a positive impact' },
             { name: 'Altruism', description: 'Putting the needs of others before your own' }
         ];
-
         const ratings = {};
         let topValues = [];
-
         function updateProgress() {
             const ratedCount = Object.keys(ratings).length;
             const progress = (ratedCount / VALUES.length) * 100;
             document.getElementById('progress-text').textContent = `${ratedCount} of ${VALUES.length}`;
             document.getElementById('progress-percent').textContent = `${Math.round(progress)}%`;
             document.getElementById('progress-bar').style.width = `${progress}%`;
-
             if (ratedCount === VALUES.length) {
                 document.getElementById('results-section').classList.remove('hidden');
             }
         }
-
         function handleRating(valueName, rating) {
             ratings[valueName] = rating;
             updateProgress();
             renderValues();
         }
-
         function renderValues() {
             const container = document.getElementById('values-container');
             container.innerHTML = VALUES.map(value => {
@@ -129,16 +131,13 @@
                 `;
             }).join('');
         }
-
         function showResults() {
             topValues = Object.entries(ratings)
                 .sort(([, a], [, b]) => b - a)
                 .slice(0, 7)
                 .map(([name, rating]) => ({ name, rating }));
-
             renderTopValues();
         }
-
         function renderTopValues() {
             const container = document.getElementById('top-values');
             container.innerHTML = topValues.map((value, index) => `
@@ -154,94 +153,66 @@
                     <span class="text-lg sm:text-xl font-bold text-indigo-600">${value.rating}/10</span>
                 </div>
             `).join('');
-
             setupDragAndDrop();
         }
-
         function setupDragAndDrop() {
             const items = document.querySelectorAll('.draggable-item');
             let draggedItem = null;
-            let placeholder = null;
-
             items.forEach(item => {
-                // Mouse events
                 item.addEventListener('mousedown', function(e) {
                     draggedItem = this;
                     this.style.opacity = '0.5';
-                    
-                    const rect = this.getBoundingClientRect();
-                    const offsetY = e.clientY - rect.top;
-
                     function onMouseMove(e) {
                         e.preventDefault();
-                        
                         const afterElement = getDragAfterElement(document.getElementById('top-values'), e.clientY);
                         const container = document.getElementById('top-values');
-                        
                         if (afterElement == null) {
                             container.appendChild(draggedItem);
                         } else {
                             container.insertBefore(draggedItem, afterElement);
                         }
                     }
-
                     function onMouseUp() {
                         draggedItem.style.opacity = '1';
                         document.removeEventListener('mousemove', onMouseMove);
                         document.removeEventListener('mouseup', onMouseUp);
-                        
                         updateOrderFromDOM();
                         renderTopValues();
                     }
-
                     document.addEventListener('mousemove', onMouseMove);
                     document.addEventListener('mouseup', onMouseUp);
                 });
-
-                // Touch events for mobile
                 item.addEventListener('touchstart', function(e) {
                     draggedItem = this;
                     this.style.opacity = '0.5';
-                    
-                    const touch = e.touches[0];
-                    const rect = this.getBoundingClientRect();
-
                     function onTouchMove(e) {
                         e.preventDefault();
                         const touch = e.touches[0];
-                        
                         const afterElement = getDragAfterElement(document.getElementById('top-values'), touch.clientY);
                         const container = document.getElementById('top-values');
-                        
                         if (afterElement == null) {
                             container.appendChild(draggedItem);
                         } else {
                             container.insertBefore(draggedItem, afterElement);
                         }
                     }
-
                     function onTouchEnd() {
                         draggedItem.style.opacity = '1';
                         document.removeEventListener('touchmove', onTouchMove);
                         document.removeEventListener('touchend', onTouchEnd);
-                        
                         updateOrderFromDOM();
                         renderTopValues();
                     }
-
                     document.addEventListener('touchmove', onTouchMove, { passive: false });
                     document.addEventListener('touchend', onTouchEnd);
                 });
             });
         }
-
         function getDragAfterElement(container, y) {
             const draggableElements = [...container.querySelectorAll('.draggable-item:not(.dragging)')];
-
             return draggableElements.reduce((closest, child) => {
                 const box = child.getBoundingClientRect();
                 const offset = y - box.top - box.height / 2;
-
                 if (offset < 0 && offset > closest.offset) {
                     return { offset: offset, element: child };
                 } else {
@@ -249,23 +220,18 @@
                 }
             }, { offset: Number.NEGATIVE_INFINITY }).element;
         }
-
         function updateOrderFromDOM() {
             const items = document.querySelectorAll('.draggable-item');
             const newOrder = [];
-            
             items.forEach(item => {
                 const index = parseInt(item.getAttribute('data-index'));
                 newOrder.push(topValues[index]);
             });
-            
             topValues = newOrder;
         }
-
         document.getElementById('toggle-results').addEventListener('click', function() {
             const content = document.getElementById('results-content');
             const isHidden = content.classList.contains('hidden');
-            
             if (isHidden) {
                 showResults();
                 content.classList.remove('hidden');
@@ -275,7 +241,6 @@
                 this.textContent = 'Show My Top 7 Values';
             }
         });
-
         renderValues();
     </script>
 </body>
